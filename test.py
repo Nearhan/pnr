@@ -1,4 +1,4 @@
-import os, sys, csv, datetime, random 
+import os, sys, csv, datetime, random, xlrd 
 
 
 class CsvConverter(object):
@@ -24,6 +24,7 @@ class CsvConverter(object):
 
     def convert_single_file(self, csv_file):
         '''Converts a single file, this function starts a loop'''
+        print 'Converting this file {0}'.format(csv_file)
         fixed_data = list()
         raw_data = self.read_file(csv_file) 
         self.parse_file(fixed_data, raw_data) 
@@ -33,7 +34,7 @@ class CsvConverter(object):
     
     def read_file(self, csv_file):
         '''reads csv file, and gathers raw data '''
-        f_read = open(csv_file, 'rU')
+        f_read = open(csv_file, 'rb')
         data = [line for line in csv.reader(f_read)]
         f_read.close()
         return data
@@ -106,7 +107,34 @@ class CsvConverter(object):
         tomorrow_format = self.format_date_string(tomorrow)
         return today_format, tomorrow_format
 
+class XlsToCsv(object):
+    '''An object that converts all the XLS files into CSV files '''
+
+    def __init__(self):
+        self.files = self.gather_files()
+        self.convert_files()
+
+    def gather_files(self):
+        '''gathers all files in the directory'''
+        return [files for files in os.listdir('.') if files.count('.XLS')]
+    
+    def convert_files(self):
+        for xls in self.files:
+            print 'Converting file {0}'.format(xls)
+            self.convert_to_csv(xls)
+   
+    def convert_to_csv(self, xls):
+        xls_file = xlrd.open_workbook(xls)
+        sheet =  xls_file.sheet_by_index(1)
+        new_csv_file_name = xls.replace('.XLS', '').title() + '.csv'      
+        new_csv_file = open(new_csv_file_name, 'wb')
+        writer = csv.writer(new_csv_file, quoting=csv.QUOTE_ALL)
+        for rownum in xrange(sheet.nrows):
+            writer.writerow(sheet.row_values(rownum))
+        new_csv_file.close()
+
 if __name__ == "__main__":
+    XlsConverter = XlsToCsv()
     Csv_Converter = CsvConverter()
     Csv_Converter.convert_files()
 
